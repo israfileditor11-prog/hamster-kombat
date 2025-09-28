@@ -1,0 +1,516 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Golden Coin App</title>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: sans-serif; }
+        body { touch-action: none; user-select: none; }
+        .score-display { font-size: 50px; position: absolute; color: yellow; animation: fadeOut 1s forwards; pointer-events: none; }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-30px); } }
+        .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); }
+        }
+        #snackbar { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: rgb(15 23 42); color: #fff; text-align: center; border-radius: 24px; padding: 12px; position: fixed; z-index: 1; left: 50%; bottom: 50px; }
+        #snackbar.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @-webkit-keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 50px; opacity: 1;} }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 50px; opacity: 1;} }
+        @-webkit-keyframes fadeout { from {bottom: 50px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        @keyframes fadeout { from {bottom: 50px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        .page { display: none; height: 100%; width: 100%; }
+        .page.active { display: flex; flex-direction: column; }
+    </style>
+</head>
+<body class="bg-gradient-to-r from-[#0f0c29] to-[#24243e]">
+    
+    <div id="app-container" class="h-full w-full">
+        <!-- Main Page -->
+        <div id="main-page" class="page active justify-center items-center p-3">
+            <div class="bg-gradient-to-r from-[#0f0c29] to-[#24243e] rounded-3xl shadow-2xl p-4 w-full h-full flex flex-col max-w-md text-white">
+                <div class="flex justify-between items-center mb-4 bg-slate-900/10 rounded-3xl shadow-xl p-2">
+                    <div class="flex items-center">
+                        <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxMSEhUTExISFhUVGBUYFRgVFxgVFxcYGBcWGBYWFxUYHSggGBolHhYVITEhJSorLi4uGB8zODMsNygtLisBCgoKDg0OGxAQGi0lICAtKy0tLS4rLS0tLS8vLS0tNS0tMC0tLS0vLS0tLS0rLi0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAOEA4QMBIgACEQEDEQH/xAAbAAEAAgMBAQAAAAAAAAAAAAAAAgQDBQYBB//EAEIQAAECBAMEBgkBBgUFAQAAAAEAAgMRITEEQVESYXGBBSIykaHBBhNCUmJykrHRghQjM6Lh8ENTssLxRHOD0vI0/8QAGgEAAgMBAQAAAAAAAAAAAAAAAAECAwQFBv/EAC0RAAIBAwIEBAYDAQAAAAAAAAABAgMEESExBRJBUSJxgbFCYZGhwdETMvAU/9oADAMBAAIRAxEAPwD7iiIgAiIgAiIgAiKL3gCZIAGZoEN4Aki0+M6fY2jBtHWzfyVqY+PjRBMu2W7jsN5uPmVzq3E6MNI+J/L9l8Leb1eh08fGQ2dp7RunXuuqMXp6ELbTuAl95LlzEhi7i63YGtpudIcxNQOMAtDHtdtxNW5Sbsrn1OLVX/VJfc0xtI9cv7HRP9I9Ife7+ixH0if7je8rQftrp02BVlmNNHD4gSo/tsSXbycaBoqDLILM+IXD+P7ItVrDt92dCPSJ/uN7ysjPSPWH3O/oud/a4k5bZ7UrNNNmeYUBjnymdg9UGrGXJlcAFC4hXXxv6IP+aPb7s66F0/DNw9vIEeBV2Bj4b+y9p3Tke41XEjFicjDbcibS5thU12h4KbIkN2bm0B64mK26zZ/YLRT4rWW+H9iqVpH5r7neIubwL3sE2v2huO00csls4HSg9oS3i3cujS4lSnpPwv57fUyyoSW2psUUYcQOEwQRuUl0E01lFIRETAIiIAIiIAIiIAIiIAIiIAIvCZXXPdKdMl3UhGli4XO5unFZ7i5hQjzS9F3LKdOU3hGw6R6XZD6o6z9BYcT5LncXinxOtEfJuU6N4NAueEyqsWKGUltPrTISvM5n4RzOSqxHlxm47VO9h0FhLQLzdzeVKz8Wi7L8/wC+h0aVBR2+pYfipUY2tRtPE6jLYsOc+SrxIhcdokmzhOtLObuloscV4bPaPE7xVrlia97+w2QqZmgqKy1CyZbNKgkZiKSnq2f8zCoPxTAZki4PeJOC9OBArEiE89kfkrNh4Tbw4JcPeDZD63IUW9htpFNuLBAk1zqNFAT2TPRSMV5/wn+1l7xnmtjsxNIbeL9r/QCnq3/5kLk15+8k+R/L6kf5Ea8xnzn6p952+GSiMVLtMeOxdp9nktkIT/8AMh82v8lmhw4rcoTuDy0/ztknyeX1D+RGshRWuFxY97jXwVgEefIUCsx5H+LAcBm7ZD2j9bJrAzBw31hRCNwO0PpNQouDW4uZMMcWmYJDrTBkZmpqFdg9Jn2xtCtRIOkMzkfDitZHbEh9oTFes2t8yLqDMQ1woaZ8BZvElJNobgpanRw8dIbUN05XlcabTfO29bLo/ptr+q/qnI+yfwuNa4gzBIcDcUO0bNB0AVqHHDqOkDbaFGOOdPZ424LXb3lSi/A9O3Qz1LeLWp36Ll+jelXQjsPmW+LeGo3LpocQOALSCDYhejtbuFxHMd+qOdUpOD1JIiLUVhERABERABERABeEyqvVzvTvSO0fVMNB2iMz7vBZ7m5jQhzS9F3LKdNzlhGLpbpMxTsMnseLj+FpY2IlMNO5zxlP3fh+LPKl2Jiy6glWjjkdYYOW852tetOVdKVy+BwzG9eVrVp1JuUnr7fJHVp01FYQlytOXsnJw+ErAYxcdmGJm+5s710Oi8Y10UybMMFCc/lBz8lchNl1IQFO049lvE+07d+FUo5Lm1EwMwrGSMQ7TshKYno1uaubD3do+rGnafzybzruUoMMMqJlxu89o8PdG4eKknlLbUrbbIw4TW1DRP3ndd3ebcgFke4mpJJ31UUUXJvcWApNaTZThwp8FYa2VkhNkYcMDipoiZEAyssWJhsdV7QT71n/AFCvfNeRI2iwEzTUmthqJjdDcOw7bHuxCA7k+x5yVWJh2RCZTZEF6Sd+puauryKwOADhOViKOb8rvKyfMnvoTTaNWYjmEB9LgOFq3PHis4I4CX0t0+YrNEoNmJJzDQOlTg4eyVTiwnQairN9dk5T1G9JxwWJqRegx5dV3ZHMwxkDqN2WWh23RnSDoLpGrDcCv6m/3VaFjgbcRPL43HXcs+HjSoZ7JsTcZl0smnTnrOdOrKElKLw0VVKaksH0GFEDgHNMwbFTXLdD9IGE7Zd2CfpOo3f8rqQvVWl1G4hnqt0cqrTcHgIiLUVBERABEUXvABJoAJngEN4A1/TeP9WyTT13W3DMrk4sTZFJ7RGV2tsXDfkOZ0VnHYr1j3RHW+zRQDiaDiVq3kuMzc1lYjLqOzEpU3Lyd7cutU5ui0X7OrQpcscfUiLZSP0u3H3XLAGmK7ZBOyO0c/lnmfsmIeSQxvadc2pq4ahW2w9kCEyhlMu0GbjvOW9ZEsmpvCJNbPqM6rG0c4ZfC3V32VhrQAABICw8953o1oADWiQFvydSURKXRFW4RFJjCVADwBZ4cHVTZDAU08EWwiLDEjSsmIyPeBdV4kUngoEzXiRJIIiJDCIiAPfEGhBsRoVWI9Xvhmla7E/ZOrdCrCcRMGhBsRopxl0ewGrjwvUmYrDJsbNOU9yziupn9TuPutWQMl+7dVrgdgnMZtO8fhUmAw3GG6ou2spjKZ3ZoawWp8yNjhYk+reXZItqWA5yy5jRdR6PY/aHq3GrezvGnL7cFx5yM+DrS+Rvmthh45BbEFCDbQi4loZg8CtFrcOjUU16+Rnr0lNYO6RYsLHERgeLEd2oWVeujJSWV1OS1jQIiJiC0/pJitlgYLuv8o/J+xW4XH9LYgPiuJ7LZj9Lby8TzXO4nW/jo8q3lp+zRbQ5p57Gsxb7N0q4ymJkdUEaSM/1blWiOk2dJfU3kbtKltTM/aNTI7LhOspGhCrR27b2s1PWpIyFTPfkvMHXijLgRssMV13W12chzv3K9Ahlor2nVfxybytxmsZG08DJknH5vYH3PJZ1JvC8yuTywi9AWeHBldQE2Qhwp3srAEl6iZBsKLnAXUIkWVrqu4zulkaROJFJ4LGiIJBERIAiIgAiIgAiIgCMaFtDZnLMHRwsf7yJVPEMMRk5SewmmjhdvP8ACvLDE6rw7J/Vd8wHVPMTHJWLVYGnhlTDRdoAiczpV3eaNCs4V0nbNOtSQmZH2SXWnMy/Uqb27EUj2X9YVIG8GW+qzuFM5fQ0cBcqJZJZOq9GsVUwzn1m8cx9u4roFxeAiEOZF4Gnc4cLrswZ1XpOFVuak4P4fY5N1HEs9z1ERdQzGDHRtiG52gMuOXiuFxLpNlSpAqZbzXkBzXWekcSUKXvOA7pnyXIYkmYAnQE0ANzKoPyrzvF6maqj2XudGzj4cmF1qzlvG2O8VCx9GCZe85dUcBV3l3LzEOABNO4tPdYqcKGRhxq6XMvP4K5KWdDc9izgx1do3eS48+yO6XerDGE2UoUGe4Cg4CystEk5aspbIw4YCmihEiAJESRMlXiRp2UHvJUUskkgiIkMIiIAIiIAIiIAIiIAIiIAKMaCXtcBeUxxFR4iXNWIcHVZ2iVlKOjyJs0WOG3DbEHsyJ4GhH27lmYBfPWrj42VnDwptiwtHOA4Oq37qlhHzYPzJOSw8FqeUbPAuoRWhnXfQ/Yd66zoqLtQm7qd1vCS4zBOk/KoIpPjc8F1HQD6PbvB76eS6PCqnLXS7pr8mK7j4cm3REXpjnGh9KX/AMMfMft+VymII2zPZyuSDYZjiV0/pNV7B8J+/wDRc85pDnXvkRLxXk+IvNzP09kda10popY0dQ/ba2hpna62eLbWCzLaH8gVDGZCt23lqNFscV/Gg/8Ak/0hZYbl8unqXEXjnSuq0SLPgolKWTJEjaLASvESJpBERIAiIgAiIgAiIgAiIgAiLNDg6phkxsYTZWIcIDipgL1BFsIiJkSpCpHePeax3dNq12HEnPFaOcKS138VsD/+gf8Aa/3qjL97EHxaTyClMugWITpObftC5Gui6PoJ37wjVp+4XMyl/wDMvFdH0Mf3o4FX2TxXh5lFwvAzoURF685Ro+nh1m8PNcxGHWda5yJXV+kDewfm8ly2Jo53L2pCwXk+IrFzL09kdS1fgRTxdADvblLMK9jYkosI6bfiAtZ0k6bDIjkSd6tYp1Ib/ib3ELJE1Nbepdc4m6iiKBWEREAEREAEREAEREAEReoA8UmMJsskODqs4CeBNkIcIDisiImRCIiBBERAFL/qOEL/AHKkP4sT5t2QGqu4asaKdAxvhMrXQHTL3aucbTz3cFKRdEsOG7wH3XQdCxJxgBo77LmSQSB1bi20DfQrpPRpv70nRp8SFdZLNeHmiq4/ozp0RF7A5Bq/SAfuw7Rw8Zj8LjsUSXz1Hu7RpppcLvOkYO3Ce3UGXEVHiFwmLFAdDrKh38ZLzfF4YrKXde3+R0bOXhwVsU0lsjP9RA3UaF5B6+H3tEubT+AphswZS/SPu9yx9Fuk57Dn1h9neS5aeDe9jYQn7TQdQCpKtgabTPdNOBqFZRJYZUwiIoiCIiACIiACIs0ODqmGTGxhNlZhwwOKkAvUyLYREQRCIiACIiAC8JQlUOk8Sdght3dUb5ppZY0smCBidmFEiZuL3eQCpYFsmicp7yWnvtmsvSdGMhjMgcm1PkpwgZUnv2SHd7SiTyaFt5mSHMuHazNSHCgyI4hdT6Lw+275R9yfJcvhW1JppQS3mncu16Ag7MEfFN3fbwAW/hdPmuE+yb/H5Ml5LEMGxREXqDlhcV0thdl72ZVlwNR/e5dqtH6S4WYbEGVHcDY9/wB1zOK0f5KPMt46+nU02s+WeO5yE/e/mOecmBVsSSxzXyNL0lMGhpkrsZsnUn1tBWeYnlqsMSHMESG+VfqeV5k66ZlxB2XNiCxo7gbFW1rejYkwYTshTe0/hWcI8icN1223tyKk9V5EJLBZREUCARF6gDxSYwmyyQ4OqzgJibIQ4QHFZERMiERECCIiACIiACi94ChEjStdVyZpEkiUSISqTevEnkyg3uN+5TxcUgSb2nUb+eSr4t/qoYY3tOoP9zlJaIsiiu5/rIpdkOq2spyvXeVaedf5uq7k4UKxYWHstpzzH6mrNDbMgZXMjNpG7SqTLGXMDALtlubiPH8eS7uGwAACwAA5LnfRvCzeYhs2g4n8D7rpF6LhFHlpuo/i9kcq7nmWOwREXWMgUI8IPaWmxEipok0msMDhMfhC0uYbg08jwI+614NKyprRrTpL2iu09IMDtt9Y0dZt97f6flcjiGSO0OdJy+IDVeRvLZ0Krj06eR2KFXniUMVDIIe3tConc6zAsCre0IrQ9lHNtuObSvJZSvWU6n4nnIblUmYTtttWntD3hqN6zJmjc2eHjh40IoRoVlVRzdqUSGRPwcNDvVrBPETcRcZhDXVFT0JtaTZWIcIDipgSXqRBsIiJkQiIgAiIgAiKESIAgZImSrxI07WUHvJuopEkgoRooaJn+9yRooaJk/13BV2MJPrIlAKtBs3ed6aXVkkhD6oMWJQy+kZDiqUKcR227OgBoAMmzyJSNFMZwl2B2RbaOpVpoAFLWmbHc8ZHem2WpY8z0njTk8f+wVrCQTp1nEZSrYBYIMOZ3NsDWugOi6j0dwP+K4bmebvLvVttQdeooL18iitUUI5NvgMMIbA0ZXOpzKsIi9hCKjFRWyOO3l5YREUhBERABct030d6s7TR1HfynTgupUYsMOBaRMGhCy3drG4hyvfoyylUdOWT5xEh7NJdU2FhP4joouE98883HRujQt/0j0QWOldhsT9jvWsxODMOtS208wPd3cV5SpSlTk4yWqOvCrGSyjWwoboTtptQbtydvGhWyDGRgHw3bLxmLjc4ZhYTv57tGhYHwSDtNOy4Zj7EZqCZN+LzNhCxsjsxRsuyPsu4HJXVq4fSDXDYjNAnndp/CyjCuZWE+bfddVvJ2SloypxxuX0VIdIbNIjHM39pveFZhRmu7LgeBmk00RwzIiIkIIoveBdV4kQlA0icSNp3rCoveBcgcaKucYDRgLzutzKEmyaRZWCLigDstG07QWHE5KHqnv7Ttke62/NywxMaxnVhjaO6w4uzTwkSUcmXYDP3kVwJHcNzRqqUWI6MbEMuG5u3n8LwQnPO08zz3ATrsjNWw0AS4Tl4PHmk2WJY8zxjABIVn3OG7RwU2N2jQ8XajRw95GsLiR9Rynk5u9bXo3o8xDstoB2jpv3lOEJTkoxWWyE5qKyzJ0R0d610rMbc+Q3rr2NAAAEgKBY8Nh2w2hrRQeO871lXqrK0VvDHV7nIrVXUl8giItpSEREAEREAEREARewESImCtPjsCWzIq37cdy3SLLc2kK8cS36MnCo4PQ4fFYAirLaabxqqQ/I4DMneu1xXRwNWUOmXLRaTGYEEycC12uf9QvNXFpUoPxLTv0OlSuFI0b2A5b+WQ4rCyG+Gf3biN129y2EfCPbWW0LzHhMZKuP6czVxWXY0qWUew+lHCj4c97Kj6SvZ4aJ7oPNh8lAyvxPIUCg+A00OoGuUympYFheRbGDzZGiAfMHBYy2KLRjzY1ax2CBragNJi5kF5+yke2/Ozj7NCpczHyLubEwohvF/lC8OGPtRX94aqH7I622+8u0dJrxuABvXs3JPaslzD5V3LLjAZctJ47Z7gov6TyhwzxPVHcoMwrQJyyJpuMiFnEITlvLZ8atKG8jxEqPbEidtxlUyFG0vxWeHh2tpy3CfZcspfn+rnZ4XrYZNAKVEzYty3zCQZPC7O1TycLjgVOHBJ1Ay1rccFngYaou5x3V5ALoejugvai/SPM+QV1C2qV3iC9ehRUrRgtTXdF9FuiWGywXPkNSurw2HbDaGtEgPHed6yMaAJAAAWAXq9LaWULdaavucyrWdR/IIiLaUhERABERABERABERABERABQiwWuEnAFTRJxUlhgauP0WbsPI/lavFYEe2yR1t4i66heETuuZW4VSnrDT2L4XEo7nCYnCS7LtO1uyBCpuhu0n2jQ5m113WI6JhPu2R1aZeFlQi+jo9mIR8wn4iS5lThVeP9cP1/Zshdw6nJWyN2ZGzb+KgXU/S/vLl07/R+Jk5h5keSxHoONo36gs7srhfAy1XFPuaDbE7+14bMlETlQGey3I3DvwuhHQkbQfUFkZ6PxTcsHMnySVncP4H9A/6Kfc571biezSbrkCjgpNwxzPu23WMyuohejvvRO4eZPkrsDoWC32S75jPwstFPhdxLdJeb/WSuV5BbHJYfB7Rk1pce/8A4W6wnQDjWIdkaCp77DxXRMYAJAADQCQUl0qPCKcdajz9kZZ3cpbaFfCYJkMSY2WpuTxKsIi6kYRisRWEZm29WERFIQREQAREQAREQAREQAREQAREQAREQAREQAREQAREQAREQAREQAREQAREQAREQAREQAREQAREQB//2Q==" width="40px" height="40px" alt="User Avatar" class="rounded-full mr-2">
+                        <span id="userName">Bota</span>
+                    </div>
+                    <button onclick="showSnackbar('Coming Soon!')" class="bg-slate-900/10 hover:bg-slate-900/20 p-2 rounded-full flex justify-between items-center">
+                        <span class="font-bold text-lg px-2">2X Coins</span>
+                    </button>
+                </div>
+
+                <div class="flex justify-between items-center bg-slate-900/10 hover:bg-slate-900/20 p-2 rounded-3xl shadow-lg">
+                    <a href="#" target="_blank" class="flex-1 items-center p-2 text-center">
+                        <span>Join Community</span>
+                    </a>
+                </div>
+                
+                <div class="flex-grow flex flex-col justify-center">
+                    <div class="text-center mb-4 mt-8">
+                        <div class="text-4xl mb-2 flex justify-center items-center">
+                            <img src="https://html4herosimages.vercel.app/Main%20Coin%20Image.png" width="50px" height="50px" alt="Coin" class="inline-block mb-1" id="coin-image">
+                            <span id="score" class="score font-bold text-4xl ml-2">$ 0</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center mb-4 relative" id="coin-container">
+                        <img src="data:image/jpeg;base64,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" width="80%" alt="Character" class="rounded-full clickable shadow-2xl" id="coin-img">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2 px-2">
+                        <div class="flex items-center">
+                            <img src="https://html4herosimages.vercel.app/Energy%20Icon.png" id="charge" alt="Energy" class="mr-2 w-6 h-6">
+                            <div class="flex justify-between items-center">
+                                <span id="inventory">500</span>
+                                <span> / </span>
+                                <span id="max-inventory">500</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-zinc-600 rounded-3xl h-2 w-full mx-auto shadow-inner mb-4">
+                        <div id="inventory-fill" class="bg-gradient-to-r from-[#C7913D] to-[#F1D06E] h-2 rounded-3xl" style="width: 100%;"></div>
+                    </div>
+                </div>
+                
+
+                <div class="flex justify-between items-center bg-slate-900 hover:bg-slate-900/95 p-3 rounded-3xl shadow-lg mt-auto">
+                    <button class="nav-item flex-1 flex flex-col items-center" data-page="main-page"><img src="https://html4herosimages.vercel.app/Mine%20Nav%20Icon.png" alt="Mine" class="p-1" width="40px" height="40px"><span class="text-sm">Mine</span></button>
+                    <button class="nav-item flex-1 flex flex-col items-center" data-page="boost-page"><img src="https://html4herosimages.vercel.app/Boost%20Nav%20Icon.png" alt="Boost" class="p-1" width="40px" height="40px"><span class="text-sm">Boost</span></button>
+                    <button class="nav-item flex-1 flex flex-col items-center" data-page="friends-page"><img src="https://html4herosimages.vercel.app/Friends%20Nav%20Icon.png" alt="Friends" class="p-1 ml-1" width="40px" height="40px"><span class="text-sm">Friends</span></button>
+                    <button class="nav-item flex-1 flex flex-col items-center" data-page="task-page"><img src="https://html4herosimages.vercel.app/Task%20Nav%20Icon.png" alt="Task" class="p-1" width="40px" height="40px"><span class="text-sm">Task</span></button>
+                    <button class="nav-item flex-1 flex flex-col items-center" data-page="wallet-page"><img src="https://html4herosimages.vercel.app/Wallet%20Nav%20Icon.png" alt="Wallet" class="p-1" width="40px" height="40px"><span class="text-sm">Wallet</span></button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Friends Page -->
+        <div id="friends-page" class="page bg-gradient-to-r from-[#0f0c29] to-[#24243e]">
+            <div class="text-white p-4 rounded-lg max-w-md mx-auto h-full flex flex-col">
+                <div class="flex justify-between items-center mb-4"><a class="back-button" href="#"><svg width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 11.9299H2" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.00009 19L2.84009 14C2.5677 13.7429 2.35071 13.433 2.20239 13.0891C2.05407 12.7452 1.97754 12.3745 1.97754 12C1.97754 11.6255 2.05407 11.2548 2.20239 10.9109C2.35071 10.567 2.5677 10.2571 2.84009 10L8.00009 5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></div>
+                <div class="flex-grow overflow-auto">
+                    <h2 class="text-center text-2xl font-bold mb-2">Invite friends!</h2>
+                    <p class="text-center mb-4">You and your friend will receive bonuses</p>
+                    <div class="space-y-4">
+                        <div class="bg-slate-900 p-4 flex items-center rounded-3xl shadow-lg">
+                            <img src="https://html4herosimages.vercel.app/Friends%20Nav%20Icon.png" width="50px" height="50px" alt="gift" class="w-12 h-12 mr-4">
+                            <div><p class="font-bold">Invite a friend</p><p class="text-yellow-400">+5,000 for you and your friend</p></div>
+                        </div>
+                    </div>
+                </div>
+                <button id="inviteButton" class="bg-slate-900 hover:bg-slate-900/95 text-white w-full py-6 mt-4 rounded-3xl shadow-lg flex items-center justify-center"><span>Invite a friend</span></button>
+            </div>
+        </div>
+        
+        <!-- Task Page -->
+        <div id="task-page" class="page bg-gradient-to-r from-[#0f0c29] to-[#24243e]">
+            <div class="text-white p-4 rounded-lg max-w-md mx-auto h-full flex flex-col">
+                <div class="flex justify-between items-center mb-4"><a class="back-button" href="#"><svg width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 11.9299H2" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.00009 19L2.84009 14C2.5677 13.7429 2.35071 13.433 2.20239 13.0891C2.05407 12.7452 1.97754 12.3745 1.97754 12C1.97754 11.6255 2.05407 11.2548 2.20239 10.9109C2.35071 10.567 2.5677 10.2571 2.84009 10L8.00009 5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></div>
+                <div class="flex-grow overflow-auto">
+                     <div class="user-balance ml-4 mr-4 bg-slate-900 rounded-3xl shadow-lg p-4 mt-2">
+                        <div class="balance-coins flex justify-center items-center"><img src="https://html4herosimages.vercel.app/Main%20Coin%20Image.png" width="50px" alt=""><span id="task-score" class="text-3xl ml-2"></span></div>
+                        <div class="balance-title text-center mt-2"><span class="select-none">Do the tasks to mine more coins</span><hr class="mt-2"></div>
+                    </div>
+                    <div class="boosters-title px-5 mt-4"><h2 class="select-none text-2xl">Tasks</h2></div>
+                    <div id="tasks-list" class="p-4 space-y-2">
+                        <!-- Tasks will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boost Page -->
+        <div id="boost-page" class="page bg-gradient-to-r from-[#0f0c29] to-[#24243e]">
+             <div class="text-white p-4 max-w-md mx-auto h-full flex flex-col">
+                 <div class="flex items-center mb-4">
+                    <a class="back-button" href="#"><svg width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 11.9299H2" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.00009 19L2.84009 14C2.5677 13.7429 2.35071 13.433 2.20239 13.0891C2.05407 12.7452 1.97754 12.3745 1.97754 12C1.97754 11.6255 2.05407 11.2548 2.20239 10.9109C2.35071 10.567 2.5677 10.2571 2.84009 10L8.00009 5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
+                    <h2 class="text-xl font-bold text-center flex-grow">Boosters</h2>
+                 </div>
+                 <div class="flex-grow overflow-auto">
+                    <h3 class="font-bold text-xl my-4">Free daily boosters</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="turbo-boost-btn" class="bg-slate-900/50 p-4 rounded-xl flex items-center gap-2 disabled:opacity-50">
+                             <img src="https://html4herosimages.vercel.app/Turbo%20Icon.png" alt="Turbo" class="w-8 h-8">
+                             <div>
+                                 <p class="font-semibold">Turbo</p>
+                                 <p class="text-xs" id="turbo-boost-count">3/3 available</p>
+                             </div>
+                        </button>
+                         <button id="energy-boost-btn" class="bg-slate-900/50 p-4 rounded-xl flex items-center gap-2 disabled:opacity-50">
+                             <img src="https://html4herosimages.vercel.app/Full%20Energy%20Icon.png" alt="Full Energy" class="w-8 h-8">
+                             <div>
+                                 <p class="font-semibold">Full Energy</p>
+                                 <p class="text-xs" id="energy-boost-count">3/3 available</p>
+                             </div>
+                        </button>
+                    </div>
+                    <h3 class="font-bold text-xl my-4">Boosters</h3>
+                    <div class="space-y-3">
+                         <button id="multitap-booster" class="w-full bg-slate-900/50 p-3 rounded-xl flex items-center justify-between disabled:opacity-50">
+                            <div class="flex items-center gap-3">
+                                <img src="https://html4herosimages.vercel.app/Multitap%20Icon.png" alt="Multitap" class="w-10 h-10">
+                                <div>
+                                    <p class="font-semibold text-left">Multitap</p>
+                                    <p class="text-xs flex items-center gap-1"><img src="https://html4herosimages.vercel.app/Main%20Coin%20Image.png" class="w-4 h-4"> <span id="multitap-cost">1000</span> • <span id="multitap-level">1</span> lvl</p>
+                                </div>
+                            </div>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5L14.15 10C14.4237 10.2563 14.6419 10.5659 14.791 10.9099C14.9402 11.2539 15.0171 11.625 15.0171 12C15.0171 12.375 14.9402 12.7458 14.791 13.0898C14.6419 13.4339 14.4237 13.7437 14.15 14L9 19" stroke="white" opacity="0.6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        </button>
+                         <button id="limit-booster" class="w-full bg-slate-900/50 p-3 rounded-xl flex items-center justify-between disabled:opacity-50">
+                            <div class="flex items-center gap-3">
+                                <img src="https://html4herosimages.vercel.app/Energy%20Limit%20Icon.png" alt="Energy Limit" class="w-10 h-10">
+                                <div>
+                                    <p class="font-semibold text-left">Energy Limit</p>
+                                     <p class="text-xs flex items-center gap-1"><img src="https://html4herosimages.vercel.app/Main%20Coin%20Image.png" class="w-4 h-4"> <span id="limit-cost">1000</span> • <span id="limit-level">1</span> lvl</p>
+                                </div>
+                            </div>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5L14.15 10C14.4237 10.2563 14.6419 10.5659 14.791 10.9099C14.9402 11.2539 15.0171 11.625 15.0171 12C15.0171 12.375 14.9402 12.7458 14.791 13.0898C14.6419 13.4339 14.4237 13.7437 14.15 14L9 19" stroke="white" opacity="0.6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        </button>
+                        <button id="speed-booster" class="w-full bg-slate-900/50 p-3 rounded-xl flex items-center justify-between disabled:opacity-50">
+                            <div class="flex items-center gap-3">
+                                <img src="https://html4herosimages.vercel.app/Charging%20Speed%20Icon.png" alt="Charging Speed" class="w-10 h-10">
+                                <div>
+                                    <p class="font-semibold text-left">Charging Speed</p>
+                                    <p class="text-xs flex items-center gap-1"><img src="https://html4herosimages.vercel.app/Main%20Coin%20Image.png" class="w-4 h-4"> <span id="speed-cost">1000</span> • <span id="speed-level">1</span> lvl</p>
+                                </div>
+                            </div>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5L14.15 10C14.4237 10.2563 14.6419 10.5659 14.791 10.9099C14.9402 11.2539 15.0171 11.625 15.0171 12C15.0171 12.375 14.9402 12.7458 14.791 13.0898C14.6419 13.4339 14.4237 13.7437 14.15 14L9 19" stroke="white" opacity="0.6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        </button>
+                         <button id="robot-booster" class="w-full bg-slate-900/50 p-3 rounded-xl flex items-center justify-between disabled:opacity-50">
+                            <div class="flex items-center gap-3">
+                                <img src="https://html4herosimages.vercel.app/Robot%20Mine.png" alt="Robot Mine" class="w-10 h-10">
+                                <div>
+                                    <p class="font-semibold text-left">Robot Mine</p>
+                                    <p class="text-xs flex items-center gap-1"><img src="https://html4herosimages.vercel.app/Main%20Coin%20Image.png" class="w-4 h-4"> <span id="robot-cost">250000</span> • <span id="robot-level">1</span> lvl</p>
+                                </div>
+                            </div>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5L14.15 10C14.4237 10.2563 14.6419 10.5659 14.791 10.9099C14.9402 11.2539 15.0171 11.625 15.0171 12C15.0171 12.375 14.9402 12.7458 14.791 13.0898C14.6419 13.4339 14.4237 13.7437 14.15 14L9 19" stroke="white" opacity="0.6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        </button>
+                    </div>
+                 </div>
+             </div>
+        </div>
+
+        <div id="wallet-page" class="page bg-gradient-to-r from-[#0f0c29] to-[#24243e]">
+            <div class="text-white p-4 max-w-md mx-auto h-full flex flex-col">
+                <div class="flex justify-between items-center mb-4"><a class="back-button" href="#"><svg width="25px" height="25px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 11.9299H2" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.00009 19L2.84009 14C2.5677 13.7429 2.35071 13.433 2.20239 13.0891C2.05407 12.7452 1.97754 12.3745 1.97754 12C1.97754 11.6255 2.05407 11.2548 2.20239 10.9109C2.35071 10.567 2.5677 10.2571 2.84009 10L8.00009 5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></a></div>
+                <div class="flex-grow overflow-auto text-center">
+                    <div class="user-balance ml-4 mr-4 bg-slate-900/30 rounded-3xl shadow-lg p-4 mt-2">
+                        <div class="balance-coins flex justify-center items-center"><img src="https://html4herosimages.vercel.app/Main%20Coin%20Image.png" width="50px" alt=""><span id="wallet-score" class="text-3xl ml-2"></span></div>
+                        <div class="balance-title text-center mt-2"><span class="select-none">Your Balance</span></div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <div class="bg-slate-900/50 p-4 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <img src="https://placehold.co/40x40/7e22ce/ffffff.png" alt="TON" class="w-10 h-10 rounded-full">
+                                <div><p class="font-semibold">TON Blockchain</p></div>
+                            </div>
+                            <span class="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full">Coming Soon</span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="bg-slate-900/50 p-4 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <img src="https://placehold.co/40x40/3b82f6/ffffff.png" alt="ETH" class="w-10 h-10 rounded-full">
+                                <div><p class="font-semibold">ETH Blockchain</p></div>
+                            </div>
+                            <span class="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full">Coming Soon</span>
+                        </div>
+                    </div>
+                     <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-2">How to connect wallet</h3>
+                        <p class="text-sm text-slate-400">Wallet connection feature will be available soon. Stay tuned for updates!</p>
+                    </div>
+
+                </div>
+                <button onclick="showSnackbar('Coming Soon!')" class="bg-slate-900 hover:bg-slate-900/95 text-white w-full py-6 mt-4 rounded-3xl shadow-lg flex items-center justify-center"><span>Connect Wallet</span></button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="snackbar"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let fieldValues = {};
+        
+        let state = {
+            coins: 0,
+            inventory: 500,
+            maxInventory: 500,
+            rechargeRate: 1, 
+            tapValue: 1,
+            turboBoosts: 3,
+            fullEnergyBoosts: 3,
+            lastBoostReset: new Date().toDateString(),
+            boosters: {
+                multitap: { level: 1, cost: 1000, baseCost: 1000 },
+                limit: { level: 1, cost: 1000, baseCost: 1000 },
+                speed: { level: 1, cost: 1000, baseCost: 1000 },
+                robot: { level: 1, cost: 250000, baseCost: 250000 },
+            }
+        };
+
+        // Elements
+        const scoreElement = document.getElementById('score');
+        const taskScoreElement = document.getElementById('task-score');
+        const walletScoreElement = document.getElementById('wallet-score');
+        const inventoryElement = document.getElementById('inventory');
+        const maxInventoryElement = document.getElementById('max-inventory');
+        const inventoryFill = document.getElementById('inventory-fill');
+        const coinImg = document.getElementById('coin-img');
+        const coinContainer = document.getElementById('coin-container');
+        const snackbar = document.getElementById('snackbar');
+        const pages = document.querySelectorAll('.page');
+        const navItems = document.querySelectorAll('.nav-item');
+        const backButtons = document.querySelectorAll('.back-button');
+        const inviteButton = document.getElementById('inviteButton');
+        const tasksListContainer = document.getElementById('tasks-list');
+        
+        // Booster Elements
+        const turboBoostBtn = document.getElementById('turbo-boost-btn');
+        const energyBoostBtn = document.getElementById('energy-boost-btn');
+        const turboBoostCount = document.getElementById('turbo-boost-count');
+        const energyBoostCount = document.getElementById('energy-boost-count');
+        
+        const multitapBooster = document.getElementById('multitap-booster');
+        const limitBooster = document.getElementById('limit-booster');
+        const speedBooster = document.getElementById('speed-booster');
+        const robotBooster = document.getElementById('robot-booster');
+
+
+        function loadState() {
+            const savedState = JSON.parse(localStorage.getItem('goldenCoinState_v2'));
+            if (savedState) {
+                // Check if it's a new day to reset daily boosts
+                const today = new Date().toDateString();
+                if (savedState.lastBoostReset !== today) {
+                    savedState.turboBoosts = 3;
+                    savedState.fullEnergyBoosts = 3;
+                    savedState.lastBoostReset = today;
+                }
+                Object.assign(state, savedState);
+            }
+            updateAllUI();
+        }
+
+        function saveState() {
+            localStorage.setItem('goldenCoinState_v2', JSON.stringify(state));
+        }
+
+        function updateAllUI() {
+            updateScore();
+            updateInventory();
+            updateBoostersUI();
+        }
+
+        function updateScore() {
+            if (scoreElement) scoreElement.textContent = '$ ' + state.coins.toLocaleString();
+            if (taskScoreElement) taskScoreElement.textContent = state.coins.toLocaleString();
+            if (walletScoreElement) walletScoreElement.textContent = state.coins.toLocaleString();
+        }
+
+        function updateInventory() {
+            if (inventoryElement) inventoryElement.textContent = Math.floor(state.inventory);
+            if (maxInventoryElement) maxInventoryElement.textContent = state.maxInventory;
+            if (inventoryFill) inventoryFill.style.width = (state.inventory / state.maxInventory) * 100 + '%';
+        }
+        
+        function updateBoostersUI() {
+            // Daily Boosts
+            if (turboBoostCount) turboBoostCount.textContent = state.turboBoosts + '/3 available';
+            if (energyBoostCount) energyBoostCount.textContent = state.fullEnergyBoosts + '/3 available';
+            if (turboBoostBtn) turboBoostBtn.disabled = state.turboBoosts <= 0;
+            if (energyBoostBtn) energyBoostBtn.disabled = state.fullEnergyBoosts <= 0;
+            
+            // Purchasable Boosters
+            updateBoosterElement('multitap', multitapBooster);
+            updateBoosterElement('limit', limitBooster);
+            updateBoosterElement('speed', speedBooster);
+            updateBoosterElement('robot', robotBooster);
+        }
+        
+        function updateBoosterElement(boosterKey, element) {
+            if (!element) return;
+            const booster = state.boosters[boosterKey];
+            element.querySelector('#' + boosterKey + '-level').textContent = booster.level + ' lvl';
+            element.querySelector('#' + boosterKey + '-cost').textContent = booster.cost.toLocaleString();
+            element.disabled = state.coins < booster.cost;
+        }
+
+        
+        window.showSnackbar = function (message) {
+            if (!snackbar) return;
+            snackbar.textContent = message;
+            snackbar.className = "show";
+            setTimeout(function() { snackbar.className = snackbar.className.replace("show", ""); }, 3000);
+        }
+
+        function switchPage(pageId) {
+            pages.forEach(page => {
+                page.classList.remove('active');
+                if (page.id === pageId) {
+                   page.classList.add('active');
+                }
+            });
+        }
+
+        // Event Listeners
+        if (coinImg) {
+            coinImg.addEventListener('click', (event) => {
+                const tapAmount = Math.min(state.tapValue, state.inventory);
+                if (tapAmount > 0) {
+                    state.coins += state.tapValue;
+                    state.inventory -= state.tapValue;
+                    updateAllUI();
+                    saveState();
+                    
+                    coinImg.classList.add('shake');
+                    setTimeout(() => coinImg.classList.remove('shake'), 500);
+
+                    const scoreDisplay = document.createElement('div');
+                    scoreDisplay.textContent = "+" + state.tapValue;
+                    scoreDisplay.className = 'score-display';
+                    scoreDisplay.style.left = (event.clientX - coinContainer.getBoundingClientRect().left) + 'px';
+                    scoreDisplay.style.top = (event.clientY - coinContainer.getBoundingClientRect().top) + 'px';
+                    coinContainer.appendChild(scoreDisplay);
+                    setTimeout(() => scoreDisplay.remove(), 1000);
+                }
+            });
+        }
+        
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const pageId = item.getAttribute('data-page');
+                if(pageId) switchPage(pageId);
+            });
+        });
+
+        backButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchPage('main-page');
+            });
+        });
+        
+        if (inviteButton) {
+            inviteButton.addEventListener('click', function() {
+                const textToCopy = fieldValues['invite-link'] || 'https://t.me/share/url?url=https://t.me/&text=Join%20me!';
+                navigator.clipboard.writeText(textToCopy).then(function() {
+                    showSnackbar('Invite link copied!');
+                }).catch(function(err) {
+                    console.error('Error in copying text: ', err);
+                    showSnackbar('Failed to copy link.');
+                });
+            });
+        }
+        
+        // Booster listeners
+        if (turboBoostBtn) turboBoostBtn.addEventListener('click', () => {
+            if (state.turboBoosts > 0) {
+                state.turboBoosts--;
+                const originalTapValue = state.tapValue;
+                state.tapValue *= 10;
+                showSnackbar('Turbo activated! 10x tap for 10s!');
+                setTimeout(() => {
+                    state.tapValue = originalTapValue;
+                    showSnackbar('Turbo expired.');
+                }, 10000);
+                updateAllUI();
+                saveState();
+            }
+        });
+        
+        if (energyBoostBtn) energyBoostBtn.addEventListener('click', () => {
+            if (state.fullEnergyBoosts > 0) {
+                state.fullEnergyBoosts--;
+                state.inventory = state.maxInventory;
+                showSnackbar('Energy refilled!');
+                updateAllUI();
+                saveState();
+            }
+        });
+
+        function handleBoosterPurchase(boosterKey) {
+            const booster = state.boosters[boosterKey];
+            if (state.coins >= booster.cost) {
+                state.coins -= booster.cost;
+                booster.level++;
+                booster.cost = Math.floor(booster.baseCost * Math.pow(1.5, booster.level -1));
+                
+                // Apply effect
+                if (boosterKey === 'multitap') state.tapValue++;
+                if (boosterKey === 'limit') state.maxInventory += 500;
+                if (boosterKey === 'speed') state.rechargeRate++;
+
+                showSnackbar(boosterKey.charAt(0).toUpperCase() + boosterKey.slice(1) + ' upgraded to level ' + booster.level);
+                updateAllUI();
+                saveState();
+            } else {
+                showSnackbar('Not enough coins!');
+            }
+        }
+        
+        if(multitapBooster) multitapBooster.addEventListener('click', () => handleBoosterPurchase('multitap'));
+        if(limitBooster) limitBooster.addEventListener('click', () => handleBoosterPurchase('limit'));
+        if(speedBooster) speedBooster.addEventListener('click', () => handleBoosterPurchase('speed'));
+        if(robotBooster) robotBooster.addEventListener('click', () => handleBoosterPurchase('robot'));
+
+
+        // Inventory Recharge
+        setInterval(() => {
+            if (state.inventory < state.maxInventory) {
+                state.inventory += state.rechargeRate;
+                if (state.inventory > state.maxInventory) {
+                    state.inventory = state.maxInventory;
+                }
+                updateInventory();
+            }
+        }, 1000);
+        
+        // Robot mine
+        setInterval(() => {
+            if (state.boosters.robot.level > 1) {
+                const coinsPerSecond = Math.pow(2, state.boosters.robot.level -1);
+                state.coins += coinsPerSecond;
+                updateAllUI();
+                saveState();
+            }
+        }, 1000);
+        
+        function generateTasks() {
+            if (!tasksListContainer) return;
+            tasksListContainer.innerHTML = '';
+            const taskReward = 1000;
+            
+            const task1Name = fieldValues['tasks-task1-name'];
+            const task1Icon = fieldValues['tasks-task1-icon'];
+            const task1Link = fieldValues['tasks-task1-link'];
+            
+            const task2Name = fieldValues['tasks-task2-name'];
+            const task2Icon = fieldValues['tasks-task2-icon'];
+            const task2Link = fieldValues['tasks-task2-link'];
+
+            if (task1Name && task1Icon && task1Link) {
+                tasksListContainer.innerHTML += '<a href="' + task1Link + '" target="_blank" class="task-item bg-slate-900/50 p-4 flex items-center rounded-3xl shadow-lg justify-between"><div class="flex items-center"><img src="' + task1Icon + '" width="50px" alt="" class="mr-4"><div><h4 class="font-bold">' + task1Name + '</h4><div class="flex items-center text-yellow-400"><img src="https://html4herosimages.vercel.app/Main%20Coin%20Image.png" width="20px" class="mr-1"><h5>' + taskReward.toLocaleString() + '</h5></div></div></div><div><svg width="30px" height="30px" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5L14.15 10C14.4237 10.2563 14.6419 10.5659 14.791 10.9099C14.9402 11.2539 15.0171 11.625 15.0171 12C15.0171 12.375 14.9402 12.7458 14.791 13.0898C14.6419 13.4339 14.4237 13.7437 14.15 14L9 19" stroke="#ffffff" opacity="0.4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></a>';
+            }
+
+            if (task2Name && task2Icon && task2Link) {
+                tasksListContainer.innerHTML += '<a href="' + task2Link + '" target="_blank" class="task-item bg-slate-900/50 p-4 flex items-center rounded-3xl shadow-lg justify-between"><div class="flex items-center"><img src="' + task2Icon + '" width="50px" alt="" class="mr-4"><div><h4 class="font-bold">' + task2Name + '</h4><div class="flex items-center text-yellow-400"><img src="https://html4herosimages.vercel.app/Main%20Coin%20Image.png" width="20px" class="mr-1"><h5>' + taskReward.toLocaleString() + '</h5></div></div></div><div><svg width="30px" height="30px" viewbox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5L14.15 10C14.4237 10.2563 14.6419 10.5659 14.791 10.9099C14.9402 11.2539 15.0171 11.625 15.0171 12C15.0171 12.375 14.9402 12.7458 14.791 13.0898C14.6419 13.4339 14.4237 13.7437 14.15 14L9 19" stroke="#ffffff" opacity="0.4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></a>';
+            }
+        }
+        
+        window.initializePreview = function(initialFieldValues) {
+            fieldValues = initialFieldValues;
+            generateTasks();
+            loadState();
+        }
+    });
+</script>
+</body>
+</html>
